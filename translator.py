@@ -34,7 +34,7 @@ def main():
     langs = lang.tts_langs()
 
 
-    if choice == "Translate Document":
+    if choice == "Translate Text":
     # display current date & header
         st.header("Advo Translator")
         st.write(f"Date : {date.today()}")
@@ -92,16 +92,43 @@ def main():
                         )
 
     elif choice == "Translate Document":
-        st.header("DOCS Translator")
-        st.write(f"Date : {date.today()}")
-
-        file = st.file_uploader("Upload a PDF", type=["pdf"])
-        if file:
-            text = extract_text_from_pdf(file)
-            st.write(text)
-            lang_choice = st.selectbox(
-                "Language to translate: ", list(langs.values())
-            )
+        st.subheader("Translate Document")
+        input_file = st.file_uploader("Upload your document here", type=['pdf'])
+        lang_choice = st.selectbox(
+            "Language to translate: ", list(langs.values())
+        )
+        if input_file is not None:
+            if st.button("Translate Document"):
+                with open("doc_file.pdf", "wb") as f:
+                    f.write(input_file.getbuffer())
+                col1, col2, col3 = st.columns([1,1,1])
+                with col1:
+                    st.info("File uploaded successfully")
+                    extracted_text = extract_text_from_pdf("doc_file.pdf")
+                    st.markdown("**Extracted Text is Below:**")
+                    st.info(extracted_text)
+                with col2:
+                    st.markdown("**Result**")
+                    text = extract_text_from_pdf("doc_file.pdf")
+                    translation = trans.translate(text, dest=get_key(lang_choice))
+                    translation_text = f"Translated Text : {translation.text}"
+                    st.success(translation_text)
+                with col3:
+                    translated_audio = gTTS(
+                        text=translation_text, lang=get_key(lang_choice), slow=False
+                    )
+                    translated_audio.save("user_trans.mp3")
+                    audio_file = open("user_trans.mp3", "rb")
+                    audio_bytes = audio_file.read()
+                    st.audio(audio_bytes, format="audio/ogg", start_time=0)
+                     # download button to download translated audio file
+                    with open("user_trans.mp3", "rb") as file:
+                        st.download_button(
+                            label="Download",
+                            data=file,
+                            file_name="trans.mp3",
+                            mime="audio/ogg",
+                        )
 
                 
 
